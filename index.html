@@ -4,557 +4,1265 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WAVE THEORY - Procedural BOX-BANG Shader Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Courier New', Courier, monospace;
-        }
-
         body {
+            font-family: 'Inter', sans-serif;
             background-color: #191A1D;
             color: #5A5F6B;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
         }
-
-        header {
-            width: 100%;
-            max-width: 1400px;
-            margin-bottom: 20px;
-            border: 1px solid #5A5F6B;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
         }
-
-        h1 {
-            font-size: 20px;
-            letter-spacing: 2px;
-            color: #5A5F6B;
-            text-transform: uppercase;
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        .subtitle {
-            font-size: 11px;
-            letter-spacing: 1px;
-            margin-top: 4px;
-            color: #5A5F6B;
-            opacity: 0.8;
-        }
-
-        .screen-container {
-            width: 100%;
-            max-width: 1400px;
-            border: 1px solid #5A5F6B;
-            background: #000;
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            aspect-ratio: 1400 / 400;
-        }
-
-        .controls-grid {
-            width: 100%;
-            max-width: 1400px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .panel {
-            border: 1px solid #5A5F6B;
-            padding: 15px;
-            background: transparent;
-        }
-
-        .panel-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-            color: #5A5F6B;
-            font-weight: bold;
-        }
-
-        .control-group {
-            margin-bottom: 12px;
-        }
-
-        .control-group:last-child {
-            margin-bottom: 0;
-        }
-
-        label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-
-        select, input[type="range"] {
-            width: 100%;
-            background: transparent;
-            color: #5A5F6B;
-            border: 1px solid #5A5F6B;
-            padding: 8px;
-            outline: none;
-            font-family: inherit;
-        }
-
-        select option {
+        ::-webkit-scrollbar-track {
             background: #191A1D;
-            color: #5A5F6B;
         }
-
-        input[type="range"] {
-            -webkit-appearance: none;
-            height: 24px;
-            padding: 0 4px;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 16px;
+        ::-webkit-scrollbar-thumb {
             background: #5A5F6B;
-            cursor: pointer;
+            border-radius: 3px;
         }
-
-        .color-toggles {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
+        /* Color chip toggle effects */
         .color-chip {
-            flex: 1;
-            min-width: 50px;
-            height: 32px;
-            border: 1px solid #5A5F6B;
-            background: transparent;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #5A5F6B;
-            user-select: none;
-            transition: all 0.1s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         .color-chip.active {
-            background: #5A5F6B;
-            color: #191A1D;
-            font-weight: bold;
+            border-color: #5A5F6B;
+            background-color: rgba(90, 95, 107, 0.15);
         }
-
-        .color-swatch {
-            width: 8px;
-            height: 8px;
-            margin-right: 6px;
-            border: 1px solid #191A1D;
+        /* Custom Range Slider */
+        input[type=range] {
+            accent-color: #5A5F6B;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen bg-[#191A1D] text-[#5A5F6B] flex flex-col justify-between">
 
-    <header>
-        <div>
-            <h1>WAVE THEORY</h1>
-            <div class="subtitle">Procedural BOX-BANG Shader Generator</div>
+    <header class="border-b border-[#5A5F6B] bg-[#191A1D] sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-[#191A1D] border border-[#5A5F6B] flex items-center justify-center">
+                    <i class="fa-solid fa-border-all text-[#5A5F6B] text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-wider text-[#5A5F6B] flex items-center gap-2">
+                        WAVE THEORY <span class="text-xs font-mono px-2 py-0.5 rounded bg-[#191A1D] text-[#5A5F6B] border border-[#5A5F6B]">1400x400px</span>
+                    </h1>
+                    <p class="text-xs text-[#5A5F6B] font-mono">Procedural BOX-BANG Shader Generator</p>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center space-x-4 font-mono text-xs text-[#5A5F6B] bg-[#191A1D] px-3 py-1.5 rounded-lg border border-[#5A5F6B]">
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#5A5F6B]"></span>
+                    <span>FPS: <strong id="fpsCounter" class="text-[#5A5F6B] font-semibold">60</strong></span>
+                </div>
+                <div class="h-3 w-px bg-[#5A5F6B]"></div>
+                <div>TARGET FPS: <strong id="fpsTargetDisplay" class="text-[#5A5F6B] font-semibold">60</strong></div>
+                <div class="h-3 w-px bg-[#5A5F6B]"></div>
+                <div>DOTS: <strong class="text-[#5A5F6B]">~22,400 (3x3px, 2px gap)</strong></div>
+            </div>
         </div>
-        <div id="fpsDisplay" style="font-size: 12px;">FPS: 60</div>
     </header>
 
-    <div class="screen-container">
-        <canvas id="matrixCanvas" width="1400" height="400"></canvas>
-    </div>
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+        
+        <!-- LED DISPLAY SCREEN CONTAINER -->
+        <section class="relative">
+            <div class="relative rounded-xl bg-[#191A1D] border border-[#5A5F6B] overflow-hidden flex flex-col items-center">
+                
+                <!-- Display Bezel Header -->
+                <div class="w-full bg-[#191A1D] border-b border-[#5A5F6B] px-4 py-2 flex items-center justify-between text-xs font-mono text-[#5A5F6B]">
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full border border-[#5A5F6B]"></span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full border border-[#5A5F6B]"></span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full border border-[#5A5F6B]"></span>
+                        <span class="ml-2 text-[#5A5F6B] font-semibold tracking-wide" id="activeShaderTitle">Retro Perspective Highway</span>
+                    </div>
 
-    <div class="controls-grid">
-        <div class="panel">
-            <div class="panel-title">Algorithm Preset</div>
-            <div class="control-group">
-                <select id="presetSelect">
-                    <option value="0">1. Retro Perspective Highway</option>
-                    <option value="1">2. Rotating Wireframe Tesseract</option>
-                    <option value="2">3. Synthwave Plasma (Isolines)</option>
-                    <option value="3">4. Space Rocket Arcade Shooter</option>
-                    <option value="4">5. Orbiting Ellipses (Outline)</option>
-                    <option value="5">6. Audio Wave Equalizer</option>
-                    <option value="6" selected>7. Void (3D Outline Squares)</option>
-                </select>
-            </div>
-        </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="btnPause" title="Pause / Play" class="px-2.5 py-1 rounded bg-[#191A1D] border border-[#5A5F6B] text-[#5A5F6B] hover:bg-[#5A5F6B]/10 transition cursor-pointer">
+                            <i class="fa-solid fa-pause text-xs" id="pauseIcon"></i>
+                        </button>
+                        <button id="btnSnapshot" title="Save PNG Screenshot" class="px-2.5 py-1 rounded bg-[#191A1D] border border-[#5A5F6B] text-[#5A5F6B] hover:bg-[#5A5F6B]/10 transition cursor-pointer">
+                            <i class="fa-solid fa-camera text-xs"></i>
+                        </button>
+                        <button id="btnFullscreen" title="Fullscreen Mode" class="px-2.5 py-1 rounded bg-[#191A1D] border border-[#5A5F6B] text-[#5A5F6B] hover:bg-[#5A5F6B]/10 transition cursor-pointer">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                        </button>
+                    </div>
+                </div>
 
-        <div class="panel">
-            <div class="panel-title">Active Color Palette</div>
-            <div class="color-toggles">
-                <div class="color-chip active" data-color="0">
-                    <span class="color-swatch" style="background:#D7B685;"></span>#D7B6
-                </div>
-                <div class="color-chip active" data-color="1">
-                    <span class="color-swatch" style="background:#59B292;"></span>#59B2
-                </div>
-                <div class="color-chip active" data-color="2">
-                    <span class="color-swatch" style="background:#E29C45;"></span>#E29C
-                </div>
-                <div class="color-chip active" data-color="3">
-                    <span class="color-swatch" style="background:#C05266;"></span>#C052
-                </div>
-                <div class="color-chip active" data-color="4">
-                    <span class="color-swatch" style="background:#FFFFFF;"></span>WHITE
-                </div>
-            </div>
-        </div>
+                <!-- Canvas Wrapper maintaining aspect ratio 1400:400 (3.5 : 1) -->
+                <div class="w-full bg-black flex items-center justify-center p-2 md:p-4 overflow-hidden min-h-[220px] relative">
+                    <div id="canvasContainer" class="relative w-full max-w-[1400px] aspect-[1400/400] bg-black rounded border border-[#5A5F6B] overflow-hidden flex items-center justify-center">
+                        <canvas id="matrixCanvas" width="1400" height="400" class="w-full h-full block cursor-crosshair"></canvas>
+                        
+                        <!-- WebGL Error Box -->
+                        <div id="webglErrorBox" class="hidden absolute inset-0 bg-[#191A1D]/95 flex flex-col items-center justify-center p-6 text-center z-20 border border-[#5A5F6B]">
+                            <i class="fa-solid fa-triangle-exclamation text-[#5A5F6B] text-4xl mb-3"></i>
+                            <h3 class="text-base font-bold text-[#5A5F6B] mb-1">WebGL Initialization Error</h3>
+                            <p class="text-xs text-[#5A5F6B] max-w-md mb-4" id="webglErrorMessage">Your browser or GPU failed to compile the shader.</p>
+                            <button onclick="location.reload()" class="px-4 py-2 bg-[#191A1D] border border-[#5A5F6B] text-[#5A5F6B] font-bold text-xs rounded-lg transition hover:bg-[#5A5F6B]/10">Reload Page</button>
+                        </div>
 
-        <div class="panel">
-            <div class="panel-title">Render Parameters</div>
-            <div class="control-group">
-                <label>Gradient Level <span id="gradVal">100%</span></label>
-                <input type="range" id="gradSlider" min="0" max="100" value="100">
+                        <!-- Toast Notification Container -->
+                        <div id="toastNotification" class="opacity-0 pointer-events-none transition-opacity duration-300 absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#191A1D] border border-[#5A5F6B] text-[#5A5F6B] text-xs font-mono px-4 py-2 rounded-lg z-30 flex items-center gap-2">
+                            <i id="toastIcon" class="fa-solid fa-circle-check text-[#5A5F6B]"></i>
+                            <span id="toastMsg">GLSL code copied to clipboard!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LED Status bar bottom -->
+                <div class="w-full bg-[#191A1D] border-t border-[#5A5F6B] px-4 py-1.5 flex items-center justify-between text-[11px] font-mono text-[#5A5F6B]">
+                    <div>MATRIX: 1400x400 px | CIRCULAR DOTS: #181A1D (3x3px, 2px gap)</div>
+                    <div class="flex items-center space-x-3">
+                        <span id="speedIndicator">SPEED: 1.0x</span>
+                    </div>
+                </div>
             </div>
-            <div class="control-group">
-                <label>Target FPS <span id="fpsVal">60</span></label>
-                <input type="range" id="fpsSlider" min="12" max="60" value="60" step="1">
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- LEFT COLUMN: Preset Dropdown, Palette Toggles & Sliders (8 cols) -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Main Controls Box -->
+                <div class="bg-[#191A1D] border border-[#5A5F6B] rounded-xl p-5 space-y-6">
+                    
+                    <!-- Presets Selector Bar -->
+                    <div class="pb-5 border-b border-[#5A5F6B]">
+                        <label class="block text-xs font-mono font-semibold text-[#5A5F6B] uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-clapperboard text-[#5A5F6B]"></i>
+                            Select Animation Preset
+                        </label>
+                        <div class="relative">
+                            <select id="shaderPresetSelect" class="w-full bg-[#191A1D] border border-[#5A5F6B] hover:border-[#5A5F6B] rounded-xl px-4 py-3 text-base font-semibold text-[#5A5F6B] font-mono focus:outline-none appearance-none cursor-pointer transition">
+                                <option value="retro_road">🏎️ 1. Retro Perspective Highway</option>
+                                <option value="rotating_tesseract">🧊 2. Rotating Wireframe Tesseract</option>
+                                <option value="synthwave_plasma">🌌 3. Synthwave Plasma (Isolines)</option>
+                                <option value="space_rocket">🚀 4. Space Rocket Arcade Shooter</option>
+                                <option value="orbiting_spirals">⭕ 5. Orbiting Ellipses (Outline)</option>
+                                <option value="audio_wave">📻 6. Audio Wave Equalizer</option>
+                                <option value="void_squares">🌀 7. Void (3D Outline Squares)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#5A5F6B]">
+                                <i class="fa-solid fa-chevron-down text-sm text-[#5A5F6B]"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CUSTOM PALETTE COLORS SELECTION -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-mono font-semibold text-[#5A5F6B] uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-palette text-[#5A5F6B]"></i>
+                                Enable/Disable Animation Accent Colors
+                            </label>
+                            <span class="text-xs text-[#5A5F6B]">Click a color chip to activate or exclude</span>
+                        </div>
+
+                        <!-- Grid of 5 Colors including White (#FFFFFF) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                            <!-- Color 1: #D7B685 -->
+                            <button data-color-idx="0" class="color-toggle-btn active color-chip border border-[#5A5F6B] rounded-xl p-2.5 bg-[#191A1D] flex items-center justify-between cursor-pointer text-left">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-md border border-[#5A5F6B] shrink-0" style="background-color: #D7B685;"></span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-[#5A5F6B] leading-tight">Gold</div>
+                                        <div class="text-[9px] font-mono text-[#5A5F6B]">#D7B685</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-check text-[10px] text-[#5A5F6B] check-icon"></i>
+                            </button>
+
+                            <!-- Color 2: #59B292 -->
+                            <button data-color-idx="1" class="color-toggle-btn active color-chip border border-[#5A5F6B] rounded-xl p-2.5 bg-[#191A1D] flex items-center justify-between cursor-pointer text-left">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-md border border-[#5A5F6B] shrink-0" style="background-color: #59B292;"></span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-[#5A5F6B] leading-tight">Emerald</div>
+                                        <div class="text-[9px] font-mono text-[#5A5F6B]">#59B292</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-check text-[10px] text-[#5A5F6B] check-icon"></i>
+                            </button>
+
+                            <!-- Color 3: #E29C45 -->
+                            <button data-color-idx="2" class="color-toggle-btn active color-chip border border-[#5A5F6B] rounded-xl p-2.5 bg-[#191A1D] flex items-center justify-between cursor-pointer text-left">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-md border border-[#5A5F6B] shrink-0" style="background-color: #E29C45;"></span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-[#5A5F6B] leading-tight">Amber</div>
+                                        <div class="text-[9px] font-mono text-[#5A5F6B]">#E29C45</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-check text-[10px] text-[#5A5F6B] check-icon"></i>
+                            </button>
+
+                            <!-- Color 4: #C05266 -->
+                            <button data-color-idx="3" class="color-toggle-btn active color-chip border border-[#5A5F6B] rounded-xl p-2.5 bg-[#191A1D] flex items-center justify-between cursor-pointer text-left">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-md border border-[#5A5F6B] shrink-0" style="background-color: #C05266;"></span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-[#5A5F6B] leading-tight">Rose</div>
+                                        <div class="text-[9px] font-mono text-[#5A5F6B]">#C05266</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-check text-[10px] text-[#5A5F6B] check-icon"></i>
+                            </button>
+
+                            <!-- Color 5: #FFFFFF (White Option) -->
+                            <button data-color-idx="4" class="color-toggle-btn active color-chip border border-[#5A5F6B] rounded-xl p-2.5 bg-[#191A1D] flex items-center justify-between cursor-pointer text-left">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-md border border-[#5A5F6B] bg-white shrink-0"></span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-[#5A5F6B] leading-tight">White</div>
+                                        <div class="text-[9px] font-mono text-[#5A5F6B]">#FFFFFF</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-check text-[10px] text-[#5A5F6B] check-icon"></i>
+                            </button>
+                        </div>
+
+                        <!-- Palette Mixing Mode -->
+                        <div class="flex flex-wrap items-center justify-between pt-2 gap-2 text-xs font-mono text-[#5A5F6B]">
+                            <span class="text-[#5A5F6B]">Palette Mode:</span>
+                            <div class="flex space-x-3">
+                                <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                                    <input type="radio" name="paletteMode" value="strict" checked class="text-[#5A5F6B] focus:ring-0">
+                                    <span>Selected Colors Only</span>
+                                </label>
+                                <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                                    <input type="radio" name="paletteMode" value="gradient" class="text-[#5A5F6B] focus:ring-0">
+                                    <span>Gradient Interpolation</span>
+                                </label>
+                                <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                                    <input type="radio" name="paletteMode" value="rgb" class="text-[#5A5F6B] focus:ring-0">
+                                    <span>Full RGB + Tint</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#191A1D] border border-[#5A5F6B] rounded-xl p-5 space-y-4">
+                    <h3 class="text-xs font-mono font-semibold text-[#5A5F6B] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-[#5A5F6B]"></i>
+                        LED Brightness & Physics Parameters
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <!-- FPS Cap Slider (12 FPS to 60 FPS) -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Target FPS:</span>
+                                <span id="valFps" class="text-[#5A5F6B] font-bold">60 FPS</span>
+                            </div>
+                            <input type="range" id="sliderFps" min="12" max="60" step="1" value="60" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Speed Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Animation Speed:</span>
+                                <span id="valSpeed" class="text-[#5A5F6B] font-bold">1.0x</span>
+                            </div>
+                            <input type="range" id="sliderSpeed" min="0.1" max="3.0" step="0.1" value="1.0" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Brightness Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Max LED Brightness:</span>
+                                <span id="valBrightness" class="text-[#5A5F6B] font-bold">100%</span>
+                            </div>
+                            <input type="range" id="sliderBrightness" min="0.2" max="2.0" step="0.1" value="1.0" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Contrast Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Contrast / Depth:</span>
+                                <span id="valContrast" class="text-[#5A5F6B] font-bold">1.2</span>
+                            </div>
+                            <input type="range" id="sliderContrast" min="0.5" max="3.0" step="0.1" value="1.2" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+                        
+                        <!-- Dot Pitch / Scale Slider (Default 5px = 3px dot + 2px space) -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Grid Pitch (Dot + Gap):</span>
+                                <span id="valPitch" class="text-[#5A5F6B] font-bold">5px (3+2)</span>
+                            </div>
+                            <input type="range" id="sliderPitch" min="3" max="8" step="1" value="5" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Glow Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">LED Glow / Bloom:</span>
+                                <span id="valGlow" class="text-[#5A5F6B] font-bold">60%</span>
+                            </div>
+                            <input type="range" id="sliderGlow" min="0.0" max="1.0" step="0.05" value="0.6" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Pattern Scale Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Pattern Zoom / Scale:</span>
+                                <span id="valScale" class="text-[#5A5F6B] font-bold">1.0</span>
+                            </div>
+                            <input type="range" id="sliderScale" min="0.2" max="3.0" step="0.1" value="1.0" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Gradient Level Slider (0% = solid colors, 100% = full gradient) -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-[#5A5F6B]">Gradient Level:</span>
+                                <span id="valGradient" class="text-[#5A5F6B] font-bold">100%</span>
+                            </div>
+                            <input type="range" id="sliderGradient" min="0.0" max="1.0" step="0.05" value="1.0" class="w-full bg-[#191A1D] border border-[#5A5F6B] h-2 rounded-lg cursor-pointer">
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- GLSL Code Inspector -->
+                <div class="bg-[#191A1D] border border-[#5A5F6B] rounded-xl p-5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-mono font-semibold text-[#5A5F6B] uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-code text-[#5A5F6B]"></i>
+                            GLSL Shader Formula
+                        </h3>
+                        <button id="btnCopyCode" class="text-[11px] font-mono text-[#5A5F6B] hover:text-[#5A5F6B] transition flex items-center gap-1 cursor-pointer">
+                            <i class="fa-regular fa-copy"></i><span>Copy</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-[#191A1D] border border-[#5A5F6B] rounded-lg p-3 font-mono text-[11px] text-[#5A5F6B] h-64 overflow-y-auto leading-relaxed scrollbar-thin">
+                        <pre id="glslCodeDisplay" class="text-[#5A5F6B] whitespace-pre-wrap select-all">/* Loading GLSL shader... */</pre>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="bg-[#191A1D] border border-[#5A5F6B] rounded-xl p-5 space-y-3">
+                    <h3 class="text-xs font-mono font-semibold text-[#5A5F6B] uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-[#5A5F6B]"></i>
+                        Display Specifications
+                    </h3>
+                    <ul class="text-xs text-[#5A5F6B] space-y-2 font-mono leading-relaxed">
+                        <li class="flex justify-between border-b border-[#5A5F6B] pb-1.5">
+                            <span>Resolution:</span>
+                            <span class="text-[#5A5F6B]">1400 x 400 px</span>
+                        </li>
+                        <li class="flex justify-between border-b border-[#5A5F6B] pb-1.5">
+                            <span>LED Dot Shape:</span>
+                            <span class="text-[#5A5F6B] font-bold">Circular (3x3 px)</span>
+                        </li>
+                        <li class="flex justify-between border-b border-[#5A5F6B] pb-1.5">
+                            <span>Dot Spacing:</span>
+                            <span class="text-[#5A5F6B] font-bold">2 px</span>
+                        </li>
+                        <li class="flex justify-between border-b border-[#5A5F6B] pb-1.5">
+                            <span>Base Off State:</span>
+                            <span class="text-[#5A5F6B]">#181A1D</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span>Rendering Engine:</span>
+                            <span class="text-[#5A5F6B]">WebGL 1.0 Fragment Shader</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+        </section>
+    </main>
+
+    <footer class="border-t border-[#5A5F6B] bg-[#191A1D] py-4 text-center text-xs font-mono text-[#5A5F6B]">
+        WAVE THEORY &copy; 2026 | Matrix 1400x400px (3x3px Circular Dots, 2px Gap, Base #181A1D)
+    </footer>
 
     <script>
-        const VS_SOURCE = `
+        // Global State Configuration
+        const state = {
+            isPlaying: true,
+            time: 0,
+            lastFrameTime: performance.now(),
+            lastRenderTimestamp: 0,
+            fps: 60,
+            targetFps: 60,
+            speed: 1.0,
+            brightness: 1.0,
+            contrast: 1.2,
+            pitch: 5.0, // Default 5px pitch = 3px dot + 2px gap
+            gap: 2.0,   // Distance between dots: 2px
+            glow: 0.6,
+            scale: 1.0,
+            gradient: 1.0, // 1.0 = 100% continuous gradient, 0.0 = solid 0 or 100% opacity
+            preset: 'retro_road',
+            paletteMode: 'strict', // 'strict', 'gradient', 'rgb'
+            colors: {
+                c1: [0.843, 0.713, 0.521], // #D7B685 Gold
+                c2: [0.349, 0.698, 0.572], // #59B292 Emerald
+                c3: [0.886, 0.611, 0.271], // #E29C45 Amber
+                c4: [0.752, 0.321, 0.400], // #C05266 Rose
+                c5: [1.000, 1.000, 1.000]  // #FFFFFF White
+            },
+            activeColors: {
+                c1: true,
+                c2: true,
+                c3: true,
+                c4: true,
+                c5: true
+            }
+        };
+
+        const canvas = document.getElementById('matrixCanvas');
+        let gl = canvas.getContext('webgl', { preserveDrawingBuffer: true, alpha: false }) || 
+                 canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true, alpha: false });
+
+        // Show toast notification
+        function showToast(msg, isSuccess = true) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+            
+            toastMsg.textContent = msg;
+            toastIcon.className = isSuccess ? 'fa-solid fa-circle-check text-[#5A5F6B]' : 'fa-solid fa-triangle-exclamation text-[#5A5F6B]';
+            
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // --- VERTEX SHADER ---
+        const vsSource = `
             attribute vec2 a_position;
             varying vec2 v_uv;
             void main() {
-                v_uv = a_position * 0.5 + 0.5;
+                v_uv = (a_position + 1.0) * 0.5;
                 v_uv.y = 1.0 - v_uv.y;
                 gl_Position = vec4(a_position, 0.0, 1.0);
             }
         `;
 
-        const FS_SOURCE = `
-            precision mediump float;
+        const fsHeader = `
+            precision highp float;
             varying vec2 v_uv;
-            
+
             uniform vec2 u_resolution;
             uniform float u_time;
-            uniform int u_preset;
-            uniform float u_gradient_level;
-            
-            uniform vec3 u_palette[5];
-            uniform float u_active_colors[5];
-            uniform int u_active_count;
+            uniform float u_speed;
+            uniform float u_brightness;
+            uniform float u_contrast;
+            uniform float u_pitch;
+            uniform float u_gap;
+            uniform float u_glow;
+            uniform float u_scale;
+            uniform float u_gradientLevel;
 
-            vec3 getColor(int index) {
-                if (index == 0) return u_palette[0];
-                if (index == 1) return u_palette[1];
-                if (index == 2) return u_palette[2];
-                if (index == 3) return u_palette[3];
-                return u_palette[4];
+            uniform vec3 u_color1; // #D7B685
+            uniform vec3 u_color2; // #59B292
+            uniform vec3 u_color3; // #E29C45
+            uniform vec3 u_color4; // #C05266
+            uniform vec3 u_color5; // #FFFFFF
+
+            uniform vec4 u_activeColors1; // x: c1, y: c2, z: c3, w: c4
+            uniform float u_activeColor5;  // c5 (White)
+            uniform int u_paletteMode;    // 0: strict, 1: gradient, 2: rgb
+
+            const vec3 BASE_DOT_COLOR = vec3(0.0941, 0.1020, 0.1137); // #181A1D
+            #define PI 3.14159265359
+
+            float hash(vec2 p) {
+                p = fract(p * vec2(123.34, 456.21));
+                p += dot(p, p + 45.32);
+                return fract(p.x * p.y);
             }
 
-            vec3 getActiveColor(float t) {
-                if (u_active_count == 0) return vec3(1.0);
-                float idxFloat = mod(t * float(u_active_count), float(u_active_count));
-                int targetIdx = int(idxFloat);
-                
-                int currentActive = 0;
-                for (int i = 0; i < 5; i++) {
-                    if (u_active_colors[i] > 0.5) {
-                        if (currentActive == targetIdx) {
-                            return getColor(i);
-                        }
-                        currentActive++;
-                    }
-                }
-                return u_palette[0];
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
+                float a = hash(i);
+                float b = hash(i + vec2(1.0, 0.0));
+                float c = hash(i + vec2(0.0, 1.0));
+                float d = hash(i + vec2(1.0, 1.0));
+                return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
             }
 
-            void main() {
-                // LED Matrix Grid Math (3px dot, 2px gap = 5px pitch)
-                vec2 pitch = vec2(5.0);
-                vec2 cellCoord = floor(gl_FragCoord.xy / pitch);
-                vec2 cellOffset = mod(gl_FragCoord.xy, pitch);
-                
-                // Circle Mask (radius = 1.5px)
-                float distToCenter = length(cellOffset - vec2(2.0));
-                if (distToCenter > 1.5) {
-                    gl_FragColor = vec4(0.094, 0.102, 0.114, 1.0); // #181A1D matrix background
-                    return;
+            // Safe WebGL 1.0 ES palette application supporting 5 toggleable colors without dynamic array lookups
+            vec3 applyPalette(float t, vec3 rawColor) {
+                vec3 c1 = u_color1;
+                vec3 c2 = u_color2;
+                vec3 c3 = u_color3;
+                vec3 c4 = u_color4;
+                vec3 c5 = u_color5;
+
+                float act1 = u_activeColors1.x;
+                float act2 = u_activeColors1.y;
+                float act3 = u_activeColors1.z;
+                float act4 = u_activeColors1.w;
+                float act5 = u_activeColor5;
+
+                float count = act1 + act2 + act3 + act4 + act5;
+
+                if (count < 0.5) {
+                    return vec3(1.0) * rawColor; // Fallback white if none active
                 }
 
-                // Normalized Grid UV (1400x400 / 5px = 280x80 LED grid)
-                vec2 gridUV = cellCoord / (u_resolution / pitch);
-                
-                float val = 0.0;
-                vec3 color = vec3(1.0);
+                t = clamp(t, 0.0, 0.999);
 
-                // --- ALGORITHMS ---
-                
-                // 1. Retro Road
-                if (u_preset == 0) {
-                    vec2 p = (gridUV - 0.5) * 2.0;
-                    p.y += 0.2;
-                    if (p.y < 0.0) {
-                        float z = 0.2 / (-p.y);
-                        float x = p.x * z;
-                        float gridX = abs(fract(x * 4.0) - 0.5);
-                        float gridZ = abs(fract(z * 3.0 - u_time * 2.0) - 0.5);
-                        val = smoothstep(0.45, 0.5, max(gridX, gridZ));
-                        color = getActiveColor(z * 0.2);
-                    }
+                // Populate active color slots sequentially
+                vec3 slot0 = vec3(1.0);
+                vec3 slot1 = vec3(1.0);
+                vec3 slot2 = vec3(1.0);
+                vec3 slot3 = vec3(1.0);
+                vec3 slot4 = vec3(1.0);
+
+                int found = 0;
+                if (act1 > 0.5) { slot0 = c1; found = 1; }
+                if (act2 > 0.5) {
+                    if (found == 0) slot0 = c2;
+                    else if (found == 1) slot1 = c2;
+                    found += 1;
                 }
-                // 2. Tesseract
-                else if (u_preset == 1) {
-                    vec2 p = (gridUV - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
-                    float t = u_time * 0.8;
-                    mat2 rot = mat2(cos(t), -sin(t), sin(t), cos(t));
-                    p = rot * p;
-                    vec2 d = abs(p) - vec2(0.35);
-                    float box1 = abs(max(d.x, d.y));
-                    vec2 d2 = abs(p) - vec2(0.18);
-                    float box2 = abs(max(d2.x, d2.y));
-                    val = smoothstep(0.03, 0.0, min(box1, box2));
-                    color = getActiveColor(length(p));
+                if (act3 > 0.5) {
+                    if (found == 0) slot0 = c3;
+                    else if (found == 1) slot1 = c3;
+                    else if (found == 2) slot2 = c3;
+                    found += 1;
                 }
-                // 3. Synthwave Plasma (Outline isolines)
-                else if (u_preset == 2) {
-                    vec2 p = gridUV * 6.0;
-                    float v1 = sin(p.x + u_time);
-                    float v2 = sin(p.y + u_time * 0.5);
-                    float v3 = sin(p.x + p.y + u_time * 0.7);
-                    float plasma = sin(v1 + v2 + v3);
-                    val = smoothstep(0.08, 0.0, abs(fract(plasma * 3.0) - 0.5));
-                    color = getActiveColor(plasma);
+                if (act4 > 0.5) {
+                    if (found == 0) slot0 = c4;
+                    else if (found == 1) slot1 = c4;
+                    else if (found == 2) slot2 = c4;
+                    else if (found == 3) slot3 = c4;
+                    found += 1;
                 }
-                // 4. Space Rocket
-                else if (u_preset == 3) {
-                    vec2 p = gridUV;
-                    // Rocket body
-                    vec2 rPos = vec2(0.5, 0.8);
-                    float ship = smoothstep(0.03, 0.0, length((p - rPos) * vec2(1.0, 2.0)));
-                    // Lasers
-                    float laser = smoothstep(0.01, 0.0, abs(p.x - 0.5)) * step(p.y, 0.8) * smoothstep(0.0, 0.2, fract(-p.y * 4.0 - u_time * 5.0));
-                    // Falling Circle Hazards
-                    float hazards = 0.0;
-                    for (int i = 0; i < 4; i++) {
-                        float fi = float(i);
-                        vec2 hPos = vec2(0.2 + fi * 0.2, fract(u_time * (0.3 + fi * 0.1) + fi * 0.25));
-                        hazards += smoothstep(0.04, 0.02, length(p - hPos));
-                    }
-                    val = clamp(ship + laser + hazards, 0.0, 1.0);
-                    color = getActiveColor(p.y + u_time);
-                }
-                // 5. Orbiting Ellipses (Outline)
-                else if (u_preset == 4) {
-                    vec2 p = (gridUV - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
-                    float field = 0.0;
-                    for (int i = 0; i < 5; i++) {
-                        float fi = float(i);
-                        float angle = u_time * (0.4 + fi * 0.15) * (mod(fi, 2.0) == 0.0 ? 1.0 : -1.0);
-                        mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-                        vec2 offset = vec2(sin(u_time + fi), cos(u_time * 0.8 + fi)) * 0.2;
-                        vec2 ep = rot * (p - offset);
-                        vec2 scale = vec2(0.4 + fi * 0.05, 0.15 + fi * 0.03);
-                        float dist = length(ep / scale);
-                        field += smoothstep(0.05, 0.0, abs(dist - 1.0));
-                    }
-                    val = clamp(field, 0.0, 1.0);
-                    color = getActiveColor(length(p));
-                }
-                // 6. Audio Wave
-                else if (u_preset == 5) {
-                    vec2 p = gridUV;
-                    float barIdx = floor(p.x * 30.0) / 30.0;
-                    float height = sin(barIdx * 10.0 + u_time * 3.0) * 0.35 + 0.45;
-                    float bar = step(1.0 - p.y, height) * step(0.02, fract(p.x * 30.0));
-                    float wave = smoothstep(0.02, 0.0, abs((p.y - 0.5) - sin(p.x * 12.0 + u_time * 4.0) * 0.2));
-                    val = clamp(bar + wave, 0.0, 1.0);
-                    color = getActiveColor(p.x);
-                }
-                // 7. Void (3D Outline Squares + Camera Zoom)
-                else if (u_preset == 6) {
-                    vec2 p = (gridUV - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
-                    float field = 0.0;
-                    float time = u_time * 0.8;
-                    
-                    for (int i = 0; i < 6; i++) {
-                        float fi = float(i);
-                        float z = mod(time * 0.6 + fi * 0.5, 3.0) + 0.1;
-                        vec2 sp = p * z;
-                        
-                        float rotAngle = time * (0.2 + fi * 0.1) * (mod(fi, 2.0) == 0.0 ? 1.0 : -1.0);
-                        mat2 rot = mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
-                        sp = rot * sp;
-                        
-                        vec2 d = abs(sp) - vec2(0.4);
-                        float dist = max(d.x, d.y);
-                        float outline = smoothstep(0.04, 0.0, abs(dist));
-                        float fade = smoothstep(0.1, 0.5, z) * (1.0 - smoothstep(2.2, 3.0, z));
-                        
-                        field += outline * fade;
-                    }
-                    val = clamp(field, 0.0, 1.0);
-                    color = getActiveColor(val + u_time * 0.2);
+                if (act5 > 0.5) {
+                    if (found == 0) slot0 = c5;
+                    else if (found == 1) slot1 = c5;
+                    else if (found == 2) slot2 = c5;
+                    else if (found == 3) slot3 = c5;
+                    else if (found == 4) slot4 = c5;
+                    found += 1;
                 }
 
-                // Apply Gradient Control Thresholding
-                if (u_gradient_level < 0.99) {
-                    if (val < (1.0 - u_gradient_level) * 0.5) {
-                        val = 0.0;
-                    } else {
-                        val = 1.0;
-                    }
-                }
-
-                if (val <= 0.01) {
-                    gl_FragColor = vec4(0.094, 0.102, 0.114, 1.0);
-                } else {
-                    gl_FragColor = vec4(color * val, 1.0);
+                if (u_paletteMode == 0) { // Strict Colors
+                    float sel = t * float(found);
+                    if (sel < 1.0) return slot0;
+                    if (sel < 2.0) return slot1;
+                    if (sel < 3.0) return slot2;
+                    if (sel < 4.0) return slot3;
+                    return slot4;
+                } else if (u_paletteMode == 1) { // Gradient Interpolation
+                    if (found <= 1) return slot0;
+                    float scaled = t * float(found - 1);
+                    float frac = fract(scaled);
+                    if (scaled < 1.0) return mix(slot0, slot1, frac);
+                    if (scaled < 2.0) return mix(slot1, slot2, frac);
+                    if (scaled < 3.0) return mix(slot2, slot3, frac);
+                    return mix(slot3, slot4, frac);
+                } else { // Full RGB + Tint Mode
+                    vec3 palAccent = mix(slot0, slot1, sin(t * PI) * 0.5 + 0.5);
+                    return mix(rawColor, palAccent * rawColor, 0.65);
                 }
             }
         `;
 
-        // Palette Hex definition
-        const PALETTE_HEX = ['#D7B685', '#59B292', '#E29C45', '#C05266', '#FFFFFF'];
-        const activeStates = [true, true, true, true, true];
+        const shaderAlgorithms = {
+            retro_road: `
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0) * u_scale;
+                    float horizon = 0.05;
+                    vec3 col = vec3(0.0);
+                    
+                    if (p.y < horizon) {
+                        float depth = 0.4 / (horizon - p.y + 0.001);
+                        vec2 gridUv = vec2(p.x * depth, depth + time * 4.0 * u_speed);
+                        
+                        float centerLine = smoothstep(0.05, 0.0, abs(gridUv.x));
+                        float laneLines = smoothstep(0.08, 0.02, abs(fract(gridUv.x) - 0.5));
+                        float gridZ = smoothstep(0.85, 0.95, sin(gridUv.y * 1.5));
+                        float gridX = smoothstep(0.85, 0.95, sin(gridUv.x * 2.0));
+                        
+                        float grid = max(gridZ, gridX);
+                        float val = grid * clamp(1.0 - depth * 0.08, 0.0, 1.0);
+                        
+                        vec3 roadColor = applyPalette(fract(gridUv.y * 0.1), vec3(1.0));
+                        col = roadColor * (val + centerLine * 1.5 + laneLines * 0.8);
+                    } else {
+                        vec2 sunUv = p - vec2(0.0, horizon + 0.25);
+                        float distSun = length(sunUv);
+                        
+                        if (distSun < 0.22) {
+                            float stripes = sin(sunUv.y * 60.0 - time * 3.0);
+                            float sunMask = smoothstep(0.22, 0.20, distSun);
+                            if (sunUv.y < 0.0 && stripes > 0.2) sunMask = 0.0;
+                            col = applyPalette(0.8 + sunUv.y * 2.0, vec3(1.0, 0.6, 0.2)) * sunMask * 1.8;
+                        } else {
+                            float m = sin(p.x * 8.0) * 0.04 + sin(p.x * 19.0) * 0.02;
+                            if (p.y - horizon < m + 0.03) {
+                                col = applyPalette(0.1, vec3(0.2, 0.1, 0.4));
+                            } else {
+                                float stars = pow(hash(floor(uv * 120.0)), 25.0);
+                                col = applyPalette(0.5, vec3(1.0)) * stars * 1.5;
+                            }
+                        }
+                    }
+                    return col;
+                }
+            `,
 
-        function hexToRgb(hex) {
-            const r = parseInt(hex.slice(1, 3), 16) / 255;
-            const g = parseInt(hex.slice(3, 5), 16) / 255;
-            const b = parseInt(hex.slice(5, 7), 16) / 255;
-            return [r, g, b];
+            rotating_tesseract: `
+                float sdSegment(vec2 p, vec2 a, vec2 b) {
+                    vec2 pa = p - a, ba = b - a;
+                    float h = clamp(dot(pa, ba) / max(dot(ba, ba), 0.0001), 0.0, 1.0);
+                    return length(pa - ba * h);
+                }
+
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0) * 1.7 * u_scale;
+                    float t = time * 0.8 * u_speed;
+                    
+                    vec2 proj[16];
+                    float c1 = cos(t), s1 = sin(t);
+                    float c2 = cos(t * 0.7), s2 = sin(t * 0.7);
+                    
+                    for (int i = 0; i < 16; i++) {
+                        float x = (mod(float(i), 2.0) > 0.5) ? 1.0 : -1.0;
+                        float y = (mod(floor(float(i) / 2.0), 2.0) > 0.5) ? 1.0 : -1.0;
+                        float z = (mod(floor(float(i) / 4.0), 2.0) > 0.5) ? 1.0 : -1.0;
+                        float w = (float(i) >= 8.0) ? 1.0 : -1.0;
+                        
+                        float rx = x * c1 - w * s1;
+                        float rw = x * s1 + w * c1;
+                        float ry = y * c2 - z * s2;
+                        float rz = y * s2 + z * c2;
+                        
+                        float wFactor = 1.0 / (2.5 - rw * 0.65);
+                        vec3 p3 = vec3(rx, ry, rz) * wFactor;
+                        
+                        float zFactor = 1.0 / (2.2 - p3.z * 0.5);
+                        proj[i] = p3.xy * zFactor * 1.8;
+                    }
+                    
+                    float minDist = 999.0;
+                    
+                    for (int i = 0; i < 16; i++) {
+                        if (mod(float(i), 2.0) < 0.5) minDist = min(minDist, sdSegment(p, proj[i], proj[i + 1]));
+                        if (mod(floor(float(i) / 2.0), 2.0) < 0.5) minDist = min(minDist, sdSegment(p, proj[i], proj[i + 2]));
+                        if (mod(floor(float(i) / 4.0), 2.0) < 0.5) minDist = min(minDist, sdSegment(p, proj[i], proj[i + 4]));
+                        if (i < 8) minDist = min(minDist, sdSegment(p, proj[i], proj[i + 8]));
+                    }
+                    
+                    float line = smoothstep(0.042, 0.008, minDist);
+                    float glowLine = smoothstep(0.12, 0.0, minDist) * 0.4;
+                    float intensity = line + glowLine;
+                    
+                    float palPos = fract(length(p) * 0.4 + t * 0.2);
+                    return applyPalette(palPos, vec3(intensity)) * intensity * 1.6;
+                }
+            `,
+
+            synthwave_plasma: `
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0) * u_scale * 2.5;
+                    float t = time * 0.8 * u_speed;
+                    
+                    float v1 = sin(p.x * 3.0 + t);
+                    float v2 = sin(p.y * 3.0 + t * 1.2);
+                    float v3 = sin(p.x * 2.0 + p.y * 2.0 + t * 1.5);
+                    float cx = p.x + 0.5 * sin(t / 3.0);
+                    float cy = p.y + 0.5 * cos(t / 2.0);
+                    float v4 = sin(sqrt(cx * cx + cy * cy + 1.0) * 6.0 - t * 2.0);
+                    
+                    float v = (v1 + v2 + v3 + v4) * 0.25 + 0.5;
+                    
+                    // Contour isoline outline calculation
+                    float contours = abs(sin(v * 22.0));
+                    float line = smoothstep(0.72, 0.98, contours);
+                    float glowLine = smoothstep(0.40, 0.98, contours) * 0.35;
+                    float outlineVal = line + glowLine;
+                    
+                    return applyPalette(v, vec3(outlineVal)) * outlineVal * 1.8;
+                }
+            `,
+
+            space_rocket: `
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = uv * vec2(u_resolution.x / u_resolution.y, 1.0) * u_scale;
+                    float aspect = u_resolution.x / u_resolution.y;
+                    float t = time * u_speed;
+                    
+                    vec3 col = vec3(0.0);
+                    
+                    vec2 starUv = uv * vec2(80.0, 30.0);
+                    float starSpeed = t * 10.0;
+                    vec2 starGrid = floor(starUv + vec2(0.0, starSpeed));
+                    float star = step(0.965, hash(starGrid));
+                    col += applyPalette(0.0, vec3(1.0)) * star * 0.6;
+                    
+                    float rocketX = (0.5 + sin(t * 1.8) * 0.38) * aspect;
+                    float rocketY = 0.16;
+                    vec2 rocketPos = vec2(rocketX, rocketY);
+                    
+                    vec2 dRocket = p - rocketPos;
+                    float shipBody = smoothstep(0.035, 0.005, length(dRocket - vec2(0.0, 0.03))) 
+                                   * step(abs(dRocket.x), (0.08 - dRocket.y) * 0.4) 
+                                   * step(-0.04, dRocket.y) * step(dRocket.y, 0.08);
+                    float engineThrust = smoothstep(0.025, 0.0, abs(dRocket.x)) 
+                                       * smoothstep(-0.04, -0.1, dRocket.y) 
+                                       * (0.6 + 0.4 * sin(t * 40.0));
+                    
+                    col += applyPalette(0.8, vec3(1.0, 0.8, 0.2)) * shipBody * 2.0;
+                    col += applyPalette(0.3, vec3(1.0, 0.3, 0.1)) * engineThrust * 1.8;
+                    
+                    for (int i = 0; i < 5; i++) {
+                        float fi = float(i);
+                        float bulletTime = fract(t * 2.5 + fi * 0.2);
+                        float bx = (0.5 + sin((t - bulletTime * 0.4) * 1.8) * 0.38) * aspect;
+                        float by = rocketY + bulletTime * 0.85;
+                        
+                        float bullet = smoothstep(0.012, 0.002, abs(p.x - bx)) * smoothstep(0.04, 0.0, abs(p.y - by));
+                        col += applyPalette(0.25, vec3(0.2, 1.0, 0.5)) * bullet * 2.5;
+                    }
+                    
+                    // Render falling circular targets
+                    for (int j = 0; j < 6; j++) {
+                        float fj = float(j);
+                        float seed = fj * 17.31;
+                        float targetX = (0.1 + hash(vec2(seed, 1.0)) * 0.8) * aspect;
+                        float targetSpeed = 0.25 + hash(vec2(seed, 2.0)) * 0.35;
+                        float targetY = fract(1.2 - t * targetSpeed + hash(vec2(seed, 3.0)));
+                        vec2 targetPos = vec2(targetX, targetY);
+                        
+                        float dist = length(p - targetPos);
+                        float targetCircle = smoothstep(0.038, 0.026, dist);
+                        col += applyPalette(fj * 0.18, vec3(1.0, 0.2, 0.4)) * targetCircle * 1.8;
+                    }
+                    
+                    return col;
+                }
+            `,
+
+            orbiting_spirals: `
+                float sdEllipseOutline(vec2 p, vec2 r, float thickness) {
+                    vec2 p_scaled = p / r;
+                    float k = length(p_scaled);
+                    float d = abs(k - 1.0) * min(r.x, r.y);
+                    return smoothstep(thickness, 0.0, d);
+                }
+
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0) * u_scale * 1.5;
+                    float t = time * u_speed;
+                    
+                    vec3 col = vec3(0.0);
+                    
+                    // 5 overlapping hollow ellipses moving & rotating at different speeds
+                    for (int i = 0; i < 5; i++) {
+                        float fi = float(i);
+                        
+                        // Independent movement across the matrix
+                        float cx = sin(t * (0.6 + fi * 0.22) + fi * 1.4) * 0.75;
+                        float cy = cos(t * (0.8 + fi * 0.18) + fi * 2.1) * 0.28;
+                        vec2 center = vec2(cx, cy);
+                        
+                        // Independent rotation angle
+                        float angle = t * (0.6 + fi * 0.35) * (mod(fi, 2.0) < 0.5 ? 1.0 : -1.0);
+                        float ca = cos(angle), sa = sin(angle);
+                        
+                        vec2 rel = p - center;
+                        vec2 rotP = vec2(rel.x * ca - rel.y * sa, rel.x * sa + rel.y * ca);
+                        
+                        // Dynamic radii
+                        vec2 radii = vec2(0.55 + 0.18 * sin(t * 0.5 + fi), 0.26 + 0.12 * cos(t * 0.7 + fi * 2.0));
+                        
+                        float outline = sdEllipseOutline(rotP, radii, 0.035);
+                        
+                        vec3 ellipseCol = applyPalette(fi * 0.22 + fract(t * 0.08), vec3(1.0));
+                        col += ellipseCol * outline * 1.8;
+                    }
+                    
+                    return col;
+                }
+            `,
+
+            audio_wave: `
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = uv;
+                    float aspect = u_resolution.x / u_resolution.y;
+                    float t = time * u_speed * 1.5;
+                    
+                    vec3 col = vec3(0.0);
+                    
+                    // 1. Oldschool Graphic Equalizer Columns
+                    float numBars = 52.0;
+                    float barId = floor(p.x * numBars);
+                    float barNorm = barId / numBars;
+                    
+                    // Audio frequency simulation
+                    float freq = sin(barNorm * 12.0 + t * 2.2) * 0.32 
+                               + cos(barNorm * 26.0 - t * 3.8) * 0.24 
+                               + sin(barNorm * 48.0 + t * 5.2) * 0.14;
+                    float h = clamp(0.18 + 0.62 * abs(freq) + 0.12 * sin(t * 8.0 + barNorm * 14.0), 0.06, 0.94);
+                    
+                    // Column gap rendering
+                    float barUvX = fract(p.x * numBars);
+                    float inBar = step(0.15, barUvX) * step(barUvX, 0.85);
+                    
+                    float heightMask = step(p.y, h);
+                    float barVal = inBar * heightMask;
+                    
+                    // Floating peak meter indicators
+                    float peakY = clamp(h + 0.03 + 0.02 * sin(t * 12.0 + barId), 0.0, 0.98);
+                    float peakDot = inBar * smoothstep(0.025, 0.0, abs(p.y - peakY));
+                    
+                    vec3 barColor = applyPalette(p.y * 0.85 + barNorm * 0.15, vec3(1.0));
+                    col += barColor * (barVal + peakDot * 2.2);
+                    
+                    // 2. Overlay Audio Wave Oscilloscope Line
+                    float waveY = 0.65 + 0.18 * sin(p.x * 16.0 * aspect + t * 6.5) 
+                                       * cos(p.x * 9.0 - t * 4.2) 
+                                       + 0.04 * sin(p.x * 45.0 + t * 14.0);
+                                       
+                    float waveDist = abs(p.y - waveY);
+                    float waveLine = smoothstep(0.025, 0.005, waveDist);
+                    float waveGlow = smoothstep(0.08, 0.0, waveDist) * 0.35;
+                    
+                    vec3 waveColor = applyPalette(fract(p.x * 0.4 + t * 0.1), vec3(1.0));
+                    col += waveColor * (waveLine + waveGlow) * 1.6;
+                    
+                    return col;
+                }
+            `,
+
+            void_squares: `
+                vec3 computeAnimation(vec2 uv, float time) {
+                    vec2 p = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0) * u_scale * 1.8;
+                    float t = time * 0.9 * u_speed;
+                    vec3 col = vec3(0.0);
+                    
+                    // 7 overlapping 3D outline squares with camera flight zoom
+                    for (int i = 0; i < 7; i++) {
+                        float fi = float(i);
+                        
+                        // Depth flight wrapping
+                        float depth = mod(t * 0.8 + fi * 0.45, 3.15) + 0.1;
+                        
+                        // Perspective scaling
+                        vec2 sp = p * depth;
+                        
+                        // Independent rotation per layer
+                        float rotAngle = t * (0.3 + fi * 0.12) * (mod(fi, 2.0) < 0.5 ? 1.0 : -1.0);
+                        float ca = cos(rotAngle), sa = sin(rotAngle);
+                        vec2 rotP = vec2(sp.x * ca - sp.y * sa, sp.x * sa + sp.y * ca);
+                        
+                        // Thin outline square distance
+                        vec2 d = abs(rotP) - vec2(0.42);
+                        float dist = max(d.x, d.y);
+                        float outline = smoothstep(0.035, 0.0, abs(dist));
+                        
+                        // Distance fading: fade in from center, fade out at camera edge
+                        float fadeIn = smoothstep(0.1, 0.5, depth);
+                        float fadeOut = 1.0 - smoothstep(2.2, 3.15, depth);
+                        float opacity = fadeIn * fadeOut;
+                        
+                        vec3 squareCol = applyPalette(fi * 0.18 + fract(t * 0.1), vec3(1.0));
+                        col += squareCol * outline * opacity * 1.8;
+                    }
+                    
+                    return col;
+                }
+            `
+        };
+
+        function buildFragmentShaderSource(algorithmGlsl) {
+            return `
+                ${fsHeader}
+
+                ${algorithmGlsl}
+
+                void main() {
+                    vec2 pixelCoord = gl_FragCoord.xy;
+                    
+                    float pitch = u_pitch; // Default 5.0
+                    float gap = u_gap;     // Default 2.0
+                    float dotSize = max(1.0, pitch - gap); // 3.0px LED dot
+                    
+                    vec2 cellIndex = floor(pixelCoord / pitch);
+                    vec2 cellOffset = mod(pixelCoord, pitch);
+                    
+                    // Render CIRCULAR LED dot inside cell region
+                    vec2 dotCenter = vec2(dotSize * 0.5 + (gap * 0.5));
+                    float distToCenter = length(cellOffset - vec2(pitch * 0.5));
+                    bool isLedDot = (distToCenter <= (dotSize * 0.5));
+                    vec2 ledUv = (cellIndex * pitch + vec2(pitch * 0.5)) / u_resolution;
+                    
+                    if (!isLedDot) {
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); // Black background gap
+                        return;
+                    }
+                    
+                    vec3 rawAnimationCol = computeAnimation(ledUv, u_time);
+                    
+                    float rawBrightness = (rawAnimationCol.r * 0.299 + rawAnimationCol.g * 0.587 + rawAnimationCol.b * 0.114);
+                    
+                    // Apply Gradient Level (1.0 = smooth continuous gradient, 0.0 = solid uniform pixel opacity)
+                    float flatBrightness = step(0.12, rawBrightness);
+                    float brightness = mix(flatBrightness, rawBrightness, u_gradientLevel);
+                    brightness = clamp(brightness * u_brightness, 0.0, 1.0);
+                    
+                    vec3 normalizedCol = rawAnimationCol / max(rawBrightness, 0.001);
+                    vec3 processedCol = mix(normalizedCol * flatBrightness, rawAnimationCol, u_gradientLevel);
+                    
+                    processedCol = pow(clamp(processedCol, 0.0, 10.0), vec3(u_contrast));
+                    
+                    // Mix base dark dot color (#181A1D) with shader glow intensity
+                    vec3 finalLedColor = mix(BASE_DOT_COLOR, processedCol, brightness);
+                    
+                    float centerGlow = 1.0 - (distToCenter / (dotSize * 0.5)) * 0.3;
+                    finalLedColor *= mix(1.0, centerGlow, u_glow);
+                    
+                    gl_FragColor = vec4(finalLedColor, 1.0);
+                }
+            `;
         }
 
-        // WebGL Setup
-        const canvas = document.getElementById('matrixCanvas');
-        const gl = canvas.getContext('webgl');
+        let currentProgram = null;
+        let positionBuffer = null;
+        let uniformLocations = {};
 
-        if (!gl) {
-            alert('WebGL not supported');
-        }
-
-        function createShader(gl, type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(gl.getShaderInfoLog(shader));
-                gl.deleteShader(shader);
-                return null;
+        function createShader(glCtx, type, source) {
+            const shader = glCtx.createShader(type);
+            glCtx.shaderSource(shader, source);
+            glCtx.compileShader(shader);
+            if (!glCtx.getShaderParameter(shader, glCtx.COMPILE_STATUS)) {
+                const info = glCtx.getShaderInfoLog(shader);
+                glCtx.deleteShader(shader);
+                throw new Error(info);
             }
             return shader;
         }
 
-        const program = gl.createProgram();
-        gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, VS_SOURCE));
-        gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, FS_SOURCE));
-        gl.linkProgram(program);
-        gl.useProgram(program);
+        function initGlProgram(algorithmKey) {
+            const errBox = document.getElementById('webglErrorBox');
+            errBox.classList.add('hidden');
 
-        const positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            -1, -1,  1, -1, -1,  1,
-            -1,  1,  1, -1,  1,  1
-        ]), gl.STATIC_DRAW);
+            if (!gl) {
+                document.getElementById('webglErrorMessage').textContent = 'Your browser does not support WebGL.';
+                errBox.classList.remove('hidden');
+                return;
+            }
 
-        const aPosition = gl.getAttribLocation(program, 'a_position');
-        gl.enableVertexAttribArray(aPosition);
-        gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+            const code = shaderAlgorithms[algorithmKey] || shaderAlgorithms['retro_road'];
+            const fsSource = buildFragmentShaderSource(code);
 
-        // Uniform Locations
-        const uRes = gl.getUniformLocation(program, 'u_resolution');
-        const uTime = gl.getUniformLocation(program, 'u_time');
-        const uPreset = gl.getUniformLocation(program, 'u_preset');
-        const uGrad = gl.getUniformLocation(program, 'u_gradient_level');
-        const uPalette = gl.getUniformLocation(program, 'u_palette');
-        const uActiveColors = gl.getUniformLocation(program, 'u_active_colors');
-        const uActiveCount = gl.getUniformLocation(program, 'u_active_count');
+            // Update UI GLSL Code Inspector
+            document.getElementById('glslCodeDisplay').textContent = code.trim();
 
-        // UI Event Listeners
-        const presetSelect = document.getElementById('presetSelect');
-        const gradSlider = document.getElementById('gradSlider');
-        const gradVal = document.getElementById('gradVal');
-        const fpsSlider = document.getElementById('fpsSlider');
-        const fpsVal = document.getElementById('fpsVal');
-        const fpsDisplay = document.getElementById('fpsDisplay');
+            try {
+                const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+                const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-        gradSlider.addEventListener('input', (e) => {
-            gradVal.textContent = e.target.value + '%';
-        });
+                const program = gl.createProgram();
+                gl.attachShader(program, vs);
+                gl.attachShader(program, fs);
+                gl.linkProgram(program);
 
-        fpsSlider.addEventListener('input', (e) => {
-            fpsVal.textContent = e.target.value;
-            targetFps = parseInt(e.target.value);
-        });
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    throw new Error(gl.getProgramInfoLog(program));
+                }
 
-        const chips = document.querySelectorAll('.color-chip');
-        chips.forEach(chip => {
-            chip.addEventListener('click', () => {
-                const idx = parseInt(chip.dataset.color);
-                activeStates[idx] = !activeStates[idx];
-                chip.classList.toggle('active', activeStates[idx]);
-            });
-        });
+                if (currentProgram) gl.deleteProgram(currentProgram);
+                currentProgram = program;
 
-        // Loop & Timing Control
-        let targetFps = 60;
-        let lastFrameTime = performance.now();
-        let frameCount = 0;
-        let lastFpsUpdate = performance.now();
-        let startTime = performance.now();
+                gl.useProgram(currentProgram);
+
+                if (!positionBuffer) {
+                    positionBuffer = gl.createBuffer();
+                    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        -1, -1,
+                         1, -1,
+                        -1,  1,
+                        -1,  1,
+                         1, -1,
+                         1,  1
+                    ]), gl.STATIC_DRAW);
+                }
+
+                const positionLocation = gl.getAttribLocation(currentProgram, 'a_position');
+                gl.enableVertexAttribArray(positionLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+                uniformLocations = {
+                    resolution: gl.getUniformLocation(currentProgram, 'u_resolution'),
+                    time: gl.getUniformLocation(currentProgram, 'u_time'),
+                    speed: gl.getUniformLocation(currentProgram, 'u_speed'),
+                    brightness: gl.getUniformLocation(currentProgram, 'u_brightness'),
+                    contrast: gl.getUniformLocation(currentProgram, 'u_contrast'),
+                    pitch: gl.getUniformLocation(currentProgram, 'u_pitch'),
+                    gap: gl.getUniformLocation(currentProgram, 'u_gap'),
+                    glow: gl.getUniformLocation(currentProgram, 'u_glow'),
+                    scale: gl.getUniformLocation(currentProgram, 'u_scale'),
+                    gradientLevel: gl.getUniformLocation(currentProgram, 'u_gradientLevel'),
+                    color1: gl.getUniformLocation(currentProgram, 'u_color1'),
+                    color2: gl.getUniformLocation(currentProgram, 'u_color2'),
+                    color3: gl.getUniformLocation(currentProgram, 'u_color3'),
+                    color4: gl.getUniformLocation(currentProgram, 'u_color4'),
+                    color5: gl.getUniformLocation(currentProgram, 'u_color5'),
+                    activeColors1: gl.getUniformLocation(currentProgram, 'u_activeColors1'),
+                    activeColor5: gl.getUniformLocation(currentProgram, 'u_activeColor5'),
+                    paletteMode: gl.getUniformLocation(currentProgram, 'u_paletteMode')
+                };
+            } catch (err) {
+                console.error('Shader compilation error:', err);
+                document.getElementById('webglErrorMessage').textContent = 'GLSL Shader Error: ' + err.message;
+                errBox.classList.remove('hidden');
+            }
+        }
 
         function render(now) {
             requestAnimationFrame(render);
 
-            const elapsed = now - lastFrameTime;
-            const interval = 1000 / targetFps;
+            const interval = 1000.0 / state.targetFps;
+            const elapsed = now - state.lastRenderTimestamp;
 
-            if (elapsed < interval) return;
-            lastFrameTime = now - (elapsed % interval);
-
-            // FPS Counter update
-            frameCount++;
-            if (now - lastFpsUpdate >= 1000) {
-                fpsDisplay.textContent = `FPS: ${frameCount}`;
-                frameCount = 0;
-                lastFpsUpdate = now;
+            if (elapsed < interval) {
+                return;
             }
 
-            // Set uniforms
+            state.lastRenderTimestamp = now - (elapsed % interval);
+
+            const delta = (now - state.lastFrameTime) / 1000.0;
+            state.lastFrameTime = now;
+            if (delta > 0) {
+                state.fps = Math.round(mix(state.fps, 1.0 / delta, 0.1));
+                document.getElementById('fpsCounter').textContent = state.fps;
+            }
+
+            if (state.isPlaying) {
+                state.time += delta * state.speed;
+            }
+
+            if (!currentProgram || !gl) return;
+
             gl.viewport(0, 0, canvas.width, canvas.height);
-            gl.uniform2f(uRes, canvas.width, canvas.height);
-            gl.uniform1f(uTime, (now - startTime) * 0.001);
-            gl.uniform1i(uPreset, parseInt(presetSelect.value));
-            gl.uniform1f(uGrad, parseFloat(gradSlider.value) / 100.0);
+            gl.useProgram(currentProgram);
 
-            // Palette uniforms
-            const flatPalette = [];
-            PALETTE_HEX.forEach(hex => flatPalette.push(...hexToRgb(hex)));
-            gl.uniform3fv(uPalette, flatPalette);
+            gl.uniform2f(uniformLocations.resolution, canvas.width, canvas.height);
+            gl.uniform1f(uniformLocations.time, state.time);
+            gl.uniform1f(uniformLocations.speed, state.speed);
+            gl.uniform1f(uniformLocations.brightness, state.brightness);
+            gl.uniform1f(uniformLocations.contrast, state.contrast);
+            gl.uniform1f(uniformLocations.pitch, state.pitch);
+            gl.uniform1f(uniformLocations.gap, state.gap);
+            gl.uniform1f(uniformLocations.glow, state.glow);
+            gl.uniform1f(uniformLocations.scale, state.scale);
+            gl.uniform1f(uniformLocations.gradientLevel, state.gradient);
 
-            const activeArray = activeStates.map(v => v ? 1.0 : 0.0);
-            gl.uniform1fv(uActiveColors, activeArray);
+            gl.uniform3fv(uniformLocations.color1, state.colors.c1);
+            gl.uniform3fv(uniformLocations.color2, state.colors.c2);
+            gl.uniform3fv(uniformLocations.color3, state.colors.c3);
+            gl.uniform3fv(uniformLocations.color4, state.colors.c4);
+            gl.uniform3fv(uniformLocations.color5, state.colors.c5);
 
-            const activeCount = activeStates.filter(Boolean).length;
-            gl.uniform1i(uActiveCount, activeCount);
+            gl.uniform4f(
+                uniformLocations.activeColors1,
+                state.activeColors.c1 ? 1.0 : 0.0,
+                state.activeColors.c2 ? 1.0 : 0.0,
+                state.activeColors.c3 ? 1.0 : 0.0,
+                state.activeColors.c4 ? 1.0 : 0.0
+            );
+            gl.uniform1f(uniformLocations.activeColor5, state.activeColors.c5 ? 1.0 : 0.0);
+
+            let modeInt = 0;
+            if (state.paletteMode === 'gradient') modeInt = 1;
+            if (state.paletteMode === 'rgb') modeInt = 2;
+            gl.uniform1i(uniformLocations.paletteMode, modeInt);
 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
 
-        requestAnimationFrame(render);
+        function mix(a, b, f) {
+            return a + (b - a) * f;
+        }
+
+        document.querySelectorAll('.color-toggle-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.getAttribute('data-color-idx')) + 1;
+                const key = `c${idx}`;
+                state.activeColors[key] = !state.activeColors[key];
+
+                const checkIcon = btn.querySelector('.check-icon');
+                if (state.activeColors[key]) {
+                    btn.classList.add('active');
+                    btn.classList.remove('opacity-40');
+                    if (checkIcon) checkIcon.style.display = 'block';
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.add('opacity-40');
+                    if (checkIcon) checkIcon.style.display = 'none';
+                }
+            });
+        });
+
+        document.querySelectorAll('input[name="paletteMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.paletteMode = e.target.value;
+            });
+        });
+
+        const presetTitles = {
+            retro_road: 'Retro Perspective Highway',
+            rotating_tesseract: 'Rotating Wireframe Tesseract',
+            synthwave_plasma: 'Synthwave Plasma (Isolines)',
+            space_rocket: 'Space Rocket Arcade Shooter',
+            orbiting_spirals: 'Orbiting Ellipses (Outline)',
+            audio_wave: 'Audio Wave Equalizer',
+            void_squares: 'Void (3D Outline Squares)'
+        };
+
+        function switchPreset(key) {
+            state.preset = key;
+            document.getElementById('activeShaderTitle').textContent = presetTitles[key] || key;
+            document.getElementById('shaderPresetSelect').value = key;
+            initGlProgram(key);
+        }
+
+        document.getElementById('shaderPresetSelect').addEventListener('change', (e) => {
+            switchPreset(e.target.value);
+        });
+
+        // Sliders Listeners
+        document.getElementById('sliderFps').addEventListener('input', (e) => {
+            state.targetFps = parseInt(e.target.value, 10);
+            document.getElementById('valFps').textContent = `${state.targetFps} FPS`;
+            document.getElementById('fpsTargetDisplay').textContent = state.targetFps;
+        });
+
+        document.getElementById('sliderSpeed').addEventListener('input', (e) => {
+            state.speed = parseFloat(e.target.value);
+            document.getElementById('valSpeed').textContent = `${state.speed.toFixed(1)}x`;
+            document.getElementById('speedIndicator').textContent = `SPEED: ${state.speed.toFixed(1)}x`;
+        });
+
+        document.getElementById('sliderBrightness').addEventListener('input', (e) => {
+            state.brightness = parseFloat(e.target.value);
+            document.getElementById('valBrightness').textContent = `${Math.round(state.brightness * 100)}%`;
+        });
+
+        document.getElementById('sliderContrast').addEventListener('input', (e) => {
+            state.contrast = parseFloat(e.target.value);
+            document.getElementById('valContrast').textContent = state.contrast.toFixed(1);
+        });
+
+        document.getElementById('sliderPitch').addEventListener('input', (e) => {
+            state.pitch = parseFloat(e.target.value);
+            const dotSize = Math.max(1, state.pitch - state.gap);
+            document.getElementById('valPitch').textContent = `${state.pitch}px (${dotSize}+${state.gap})`;
+        });
+
+        document.getElementById('sliderGlow').addEventListener('input', (e) => {
+            state.glow = parseFloat(e.target.value);
+            document.getElementById('valGlow').textContent = `${Math.round(state.glow * 100)}%`;
+        });
+
+        document.getElementById('sliderScale').addEventListener('input', (e) => {
+            state.scale = parseFloat(e.target.value);
+            document.getElementById('valScale').textContent = state.scale.toFixed(1);
+        });
+
+        document.getElementById('sliderGradient').addEventListener('input', (e) => {
+            state.gradient = parseFloat(e.target.value);
+            document.getElementById('valGradient').textContent = `${Math.round(state.gradient * 100)}%`;
+        });
+
+        // Pause / Play
+        const btnPause = document.getElementById('btnPause');
+        const pauseIcon = document.getElementById('pauseIcon');
+        btnPause.addEventListener('click', () => {
+            state.isPlaying = !state.isPlaying;
+            pauseIcon.className = state.isPlaying ? 'fa-solid fa-pause text-xs' : 'fa-solid fa-play text-xs';
+        });
+
+        // Snapshot PNG Download
+        document.getElementById('btnSnapshot').addEventListener('click', () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `WAVE_THEORY_${state.preset}.png`;
+            link.href = dataUrl;
+            link.click();
+            showToast('Saved PNG Screenshot!');
+        });
+
+        // Fullscreen Toggle
+        document.getElementById('btnFullscreen').addEventListener('click', () => {
+            const container = document.getElementById('canvasContainer');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Copy GLSL Code to Clipboard
+        document.getElementById('btnCopyCode').addEventListener('click', () => {
+            const codeText = document.getElementById('glslCodeDisplay').textContent;
+            const textArea = document.createElement('textarea');
+            textArea.value = codeText;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('Copied GLSL code to clipboard!');
+            } catch (err) {
+                showToast('Failed to copy code.', false);
+            }
+            document.body.removeChild(textArea);
+        });
+
+        // Context Restoration Handling
+        canvas.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+        }, false);
+
+        canvas.addEventListener('webglcontextrestored', () => {
+            initGlProgram(state.preset);
+        }, false);
+
+        // INITIALIZATION
+        window.addEventListener('load', () => {
+            initGlProgram('retro_road');
+            requestAnimationFrame(render);
+        });
     </script>
 </body>
 </html>
